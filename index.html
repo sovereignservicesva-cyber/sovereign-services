@@ -529,33 +529,33 @@ async function sendChat(){
   const text=input.value.trim();
   if(!text)return;
   input.value='';
-  state.chatHistory.push({role:'user',content:text});
-  save();
   const container=document.getElementById('chat-messages');
   container.innerHTML+=`<div class="msg msg-user"><div class="msg-label">Jesse</div><div class="msg-bubble">${text.replace(/\n/g,'<br>')}</div></div><div class="msg msg-ai" id="typing-indicator"><div class="msg-label">Sovereign AI</div><div class="msg-bubble"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div></div>`;
   container.scrollTop=container.scrollHeight;
   document.getElementById('send-btn').disabled=true;
   const completed=state.jobs.filter(j=>j.status==='Completed');
   const revenue=completed.reduce((s,j)=>s+Number(j.amount),0);
-  const liveContext=`\n\nLIVE DATA: Completed jobs: ${completed.length}, Revenue: $${revenue}, Active cleaners: ${state.cleaners.filter(c=>c.status==='Active').length}, Leads: ${state.leads.length}, Monthly expenses: $${state.expenses.reduce((s,e)=>s+Number(e.amount),0)}`;
-  try {
+  const liveContext=`\n\nLIVE DATA: Completed jobs: ${completed.length}, Revenue: $${revenue}, Active cleaners: ${state.cleaners.filter(c=>c.status==='Active').length}`;
+  const messages=[...state.chatHistory,{role:'user',content:text}];
+  const payload={model:'claude-sonnet-4-20250514',max_tokens:1000,system:SYSTEM_PROMPT+liveContext,messages:messages};
+  try{
     const res=await fetch('https://sovereign-command-center-v2.netlify.app/.netlify/functions/claude',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-     body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:SYSTEM_PROMPT+liveContext,messages:state.chatHistory.length?state.chatHistory:[{role:'user',content:'hello'}]})
+      body:JSON.stringify(payload)
     });
     const data=await res.json();
     const reply=data.content?.map(b=>b.text||'').join('')||'No response.';
+    state.chatHistory.push({role:'user',content:text});
     state.chatHistory.push({role:'assistant',content:reply});
     save();
     document.getElementById('typing-indicator').outerHTML=`<div class="msg msg-ai"><div class="msg-label">Sovereign AI</div><div class="msg-bubble">${reply.replace(/\n/g,'<br>')}</div></div>`;
-  } catch(e) {
+  }catch(e){
     document.getElementById('typing-indicator').outerHTML=`<div class="msg msg-ai"><div class="msg-label">Sovereign AI</div><div class="msg-bubble" style="color:var(--red);">Connection error. Please try again.</div></div>`;
   }
   document.getElementById('send-btn').disabled=false;
   container.scrollTop=container.scrollHeight;
 }
-
 function renderAll(){renderOverview();renderJobs();renderLeads();renderCleaners();renderCerts();renderPnL();renderChat();}
 setDateGreeting();
 renderAll();
