@@ -539,7 +539,7 @@ async function sendChat(){
   const revenue=completed.reduce((s,j)=>s+Number(j.amount),0);
   const liveContext=`\n\nLIVE DATA: Completed jobs: ${completed.length}, Revenue: $${revenue}, Active cleaners: ${state.cleaners.filter(c=>c.status==='Active').length}, Leads: ${state.leads.length}, Monthly expenses: $${state.expenses.reduce((s,e)=>s+Number(e.amount),0)}`;
   try {
-    const res=await fetch('/.netlify/functions/claude',{
+    const res=await fetch('https://sovereign-command-center-v2.netlify.app/.netlify/functions/claude',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:SYSTEM_PROMPT+liveContext,messages:state.chatHistory})
