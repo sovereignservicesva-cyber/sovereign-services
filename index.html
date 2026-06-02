@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sovereign Services — Command Center</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;900&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C; --gold-light: #E8C96A; --gold-dim: #7A6030; --gold-faint: #2A1F0A;
+    --bg: #080808; --surface: #101010; --surface2: #161616; --surface3: #1E1E1E;
+    --border: #1E1800; --border2: #2A2200; --text: #D0D0D0; --text-dim: #666; --text-faint: #333;
+    --green: #22c55e; --blue: #3b82f6; --orange: #f97316; --red: #ef4444;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Barlow', sans-serif; min-height: 100vh; overflow-x: hidden; }
+
+  #header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(8,8,8,0.95); backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border2);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 32px; height: 64px;
+  }
+  .logo { display: flex; align-items: center; gap: 14px; }
+  .logo-mark { width: 38px; height: 38px; border: 2px solid var(--gold); border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+  .logo-mark span { color: var(--gold); font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 900; }
+  .logo-name { font-family: 'Playfair Display', serif; color: var(--gold); font-size: 16px; font-weight: 700; letter-spacing: 0.06em; }
+  .logo-sub { font-family: 'Barlow Condensed', sans-serif; color: var(--text-dim); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; }
+  .header-right { display: flex; align-items: center; gap: 16px; }
+  .header-date { color: var(--text-dim); font-size: 12px; }
+  .header-badge { background: var(--gold-faint); border: 1px solid var(--gold-dim); color: var(--gold); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 10px; border-radius: 3px; }
+
+  #nav { background: var(--surface); border-bottom: 1px solid var(--border2); display: flex; padding: 0 32px; overflow-x: auto; }
+  .nav-btn { background: none; border: none; cursor: pointer; color: var(--text-faint); border-bottom: 2px solid transparent; padding: 14px 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; font-family: 'Barlow Condensed', sans-serif; transition: all 0.2s; white-space: nowrap; }
+  .nav-btn:hover { color: var(--gold-dim); }
+  .nav-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+  #content { padding: 32px; max-width: 1200px; margin: 0 auto; }
+  .tab-panel { display: none; animation: fadeIn 0.3s ease; }
+  .tab-panel.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .section-label { font-family: 'Barlow Condensed', sans-serif; color: var(--gold-dim); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 4px; }
+  .section-title { font-family: 'Playfair Display', serif; font-size: 26px; color: #fff; font-weight: 700; margin-bottom: 24px; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border2); border-top: 2px solid var(--gold); border-radius: 8px; padding: 20px 24px; }
+  .stat-card.green { border-top-color: var(--green); }
+  .stat-card.blue { border-top-color: var(--blue); }
+  .stat-card.orange { border-top-color: var(--orange); }
+  .stat-label { color: var(--text-dim); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; font-family: 'Barlow Condensed', sans-serif; }
+  .stat-value { font-family: 'Playfair Display', serif; font-size: 30px; font-weight: 700; color: var(--gold); }
+  .stat-card.green .stat-value { color: var(--green); }
+  .stat-card.blue .stat-value { color: var(--blue); }
+  .stat-card.orange .stat-value { color: var(--orange); }
+  .stat-sub { color: var(--text-dim); font-size: 12px; margin-top: 4px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border2); border-radius: 8px; margin-bottom: 20px; overflow: hidden; }
+  .card-header { padding: 16px 20px; border-bottom: 1px solid var(--border2); display: flex; justify-content: space-between; align-items: center; }
+  .card-title { font-family: 'Barlow Condensed', sans-serif; color: var(--gold); font-size: 12px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th { padding: 10px 20px; text-align: left; color: var(--text-faint); font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; font-family: 'Barlow Condensed', sans-serif; border-bottom: 1px solid var(--border2); }
+  td { padding: 13px 20px; font-size: 13px; border-bottom: 1px solid #111; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+
+  .badge { display: inline-block; border-radius: 3px; padding: 2px 10px; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; font-family: 'Barlow Condensed', sans-serif; }
+  .badge-green { background: #22c55e22; color: var(--green); border: 1px solid #22c55e33; }
+  .badge-gold { background: var(--gold-faint); color: var(--gold); border: 1px solid var(--border2); }
+  .badge-blue { background: #3b82f622; color: var(--blue); border: 1px solid #3b82f633; }
+  .badge-orange { background: #f9731622; color: var(--orange); border: 1px solid #f9731633; }
+  .badge-red { background: #ef444422; color: var(--red); border: 1px solid #ef444433; }
+  .badge-gray { background: #66666622; color: #888; border: 1px solid #66666633; }
+
+  .btn { border: none; border-radius: 6px; cursor: pointer; font-family: 'Barlow', sans-serif; font-weight: 600; transition: all 0.2s; }
+  .btn-gold { background: var(--gold); color: #000; padding: 8px 18px; font-size: 12px; }
+  .btn-gold:hover { background: var(--gold-light); }
+  .btn-outline { background: none; border: 1px solid var(--border2); color: var(--text-dim); padding: 7px 14px; font-size: 11px; }
+  .btn-outline:hover { border-color: var(--gold-dim); color: var(--gold-dim); }
+  .btn-sm { padding: 5px 12px; font-size: 11px; }
+  .btn-danger { background: #ef444422; color: var(--red); border: 1px solid #ef444433; padding: 5px 12px; font-size: 11px; }
+
+  .form-grid { display: grid; gap: 12px; margin-bottom: 16px; }
+  .form-grid-2 { grid-template-columns: 1fr 1fr; }
+  .form-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .form-group label { font-size: 11px; color: var(--text-dim); letter-spacing: 0.08em; text-transform: uppercase; display: block; margin-bottom: 5px; font-family: 'Barlow Condensed', sans-serif; }
+  input, select, textarea { background: var(--surface2); border: 1px solid var(--border2); border-radius: 6px; color: var(--text); padding: 9px 13px; font-size: 13px; font-family: 'Barlow', sans-serif; outline: none; transition: border-color 0.2s; width: 100%; }
+  input:focus, select:focus, textarea:focus { border-color: var(--gold-dim); }
+  select option { background: var(--surface2); }
+  .form-panel { background: var(--surface2); border: 1px solid var(--gold-dim); border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+
+  .progress-bar { background: var(--surface3); border-radius: 4px; height: 6px; overflow: hidden; margin-top: 8px; }
+  .progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--gold-dim), var(--gold)); transition: width 0.6s ease; }
+
+  .cert-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .cert-card { background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 20px; }
+  .cert-card.done { border-color: #22c55e33; }
+  .cert-card.in-progress { border-color: var(--gold-dim); }
+  .cert-step { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid #111; font-size: 12px; }
+  .cert-step:last-child { border-bottom: none; }
+  .step-check { width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--border2); display: flex; align-items: center; justify-content: center; font-size: 9px; flex-shrink: 0; cursor: pointer; }
+  .step-check.done { background: var(--green); border-color: var(--green); color: #000; }
+
+  #chat-messages { height: 380px; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+  .msg { max-width: 80%; }
+  .msg-ai { align-self: flex-start; }
+  .msg-user { align-self: flex-end; }
+  .msg-bubble { border-radius: 8px; padding: 12px 16px; font-size: 13px; line-height: 1.65; }
+  .msg-ai .msg-bubble { background: var(--surface2); border: 1px solid var(--border2); color: var(--text); }
+  .msg-user .msg-bubble { background: var(--gold-faint); border: 1px solid var(--gold-dim); color: var(--gold-light); }
+  .msg-label { font-family: 'Barlow Condensed', sans-serif; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 5px; }
+  .msg-user .msg-label { text-align: right; }
+  .chat-input-row { display: flex; gap: 10px; padding: 16px 20px; border-top: 1px solid var(--border2); }
+  .chat-input { flex: 1; }
+  .quick-prompts { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 20px 14px; }
+  .quick-prompt { background: none; border: 1px solid var(--border2); color: var(--text-dim); border-radius: 4px; padding: 5px 12px; font-size: 11px; cursor: pointer; font-family: 'Barlow', sans-serif; transition: all 0.2s; }
+  .quick-prompt:hover { border-color: var(--gold-dim); color: var(--gold-dim); }
+
+  .pnl-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; border-bottom: 1px solid #111; font-size: 13px; }
+  .pnl-row:last-child { border-bottom: none; }
+  .pnl-row.total { border-top: 1px solid var(--border2); background: var(--surface2); font-weight: 700; font-size: 14px; }
+
+  .pipeline-cols { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .pipeline-col { background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 14px; min-height: 200px; }
+  .pipeline-col-title { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 12px; }
+  .pipeline-card { background: var(--surface); border: 1px solid var(--border2); border-radius: 6px; padding: 12px; margin-bottom: 8px; font-size: 12px; }
+  .pipeline-card-name { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+  .pipeline-card-value { color: var(--gold); font-size: 12px; margin-top: 6px; }
+
+  .typing-dot { display: inline-block; width: 6px; height: 6px; background: var(--gold-dim); border-radius: 50%; animation: blink 1.2s infinite; margin: 0 2px; }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes blink { 0%,80%,100%{opacity:0.2} 40%{opacity:1} }
+
+  .empty-state { text-align: center; padding: 48px 20px; color: var(--text-faint); font-size: 13px; }
+  .checkbox-row { display: flex; align-items: center; gap: 8px; color: var(--text-dim); font-size: 13px; margin-top: 4px; }
+  .checkbox-row input[type=checkbox] { width: auto; }
+
+  @media (max-width: 768px) {
+    #content { padding: 16px; }
+    .form-grid-3 { grid-template-columns: 1fr 1fr; }
+    .pipeline-cols { grid-template-columns: 1fr 1fr; }
+    #header { padding: 0 16px; }
+    #nav { padding: 0 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div class="logo">
+    <div class="logo-mark"><span>S</span></div>
+    <div>
+      <div class="logo-name">SOVEREIGN SERVICES LLC</div>
+      <div class="logo-sub">Operations Command Center</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="header-date" id="current-date"></div>
+    <div class="header-badge">Veteran-Owned</div>
+  </div>
+</div>
+
+<div id="nav">
+  <button class="nav-btn active" onclick="switchTab('overview')">Overview</button>
+  <button class="nav-btn" onclick="switchTab('jobs')">Jobs</button>
+  <button class="nav-btn" onclick="switchTab('leads')">Lead Pipeline</button>
+  <button class="nav-btn" onclick="switchTab('cleaners')">Cleaners</button>
+  <button class="nav-btn" onclick="switchTab('certifications')">Certifications</button>
+  <button class="nav-btn" onclick="switchTab('pnl')">P&L</button>
+  <button class="nav-btn" onclick="switchTab('ai')">AI Assistant</button>
+</div>
+
+<div id="content">
+
+  <!-- OVERVIEW -->
+  <div id="tab-overview" class="tab-panel active">
+    <div class="section-label">Daily Briefing</div>
+    <div class="section-title" id="greeting-text">Good morning, Jesse.</div>
+    <div class="stats-grid" id="overview-stats"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Recent Jobs</span><button class="btn btn-outline btn-sm" onclick="switchTab('jobs')">View All</button></div>
+        <div id="overview-jobs-table"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Certification Progress</span></div>
+        <div id="overview-certs" style="padding:16px;"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Cleaner Roster</span></div>
+      <div id="overview-cleaners" style="display:flex;gap:12px;padding:16px;flex-wrap:wrap;"></div>
+    </div>
+  </div>
+
+  <!-- JOBS -->
+  <div id="tab-jobs" class="tab-panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+      <div><div class="section-label">Job Management</div><div class="section-title" style="margin-bottom:0;">All Jobs</div></div>
+      <button class="btn btn-gold" onclick="toggleForm('job-form')">+ Add Job</button>
+    </div>
+    <div id="job-form" style="display:none;">
+      <div class="form-panel">
+        <div style="font-family:'Barlow Condensed',sans-serif;color:var(--gold);font-size:11px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:16px;">New Job</div>
+        <div class="form-grid form-grid-3">
+          <div class="form-group"><label>Client Name</label><input id="j-client" placeholder="Client name"></div>
+          <div class="form-group"><label>Service Type</label><select id="j-type"><option>Residential</option><option>Commercial</option><option>Vacation Rental</option><option>Government/Federal</option></select></div>
+          <div class="form-group"><label>Cleaner</label><input id="j-cleaner" placeholder="Cleaner name"></div>
+          <div class="form-group"><label>Date</label><input type="date" id="j-date"></div>
+          <div class="form-group"><label>Amount ($)</label><input type="number" id="j-amount" placeholder="0"></div>
+          <div class="form-group"><label>Status</label><select id="j-status"><option>Scheduled</option><option>In Progress</option><option>Completed</option><option>Pending</option><option>Cancelled</option></select></div>
+        </div>
+        <div class="checkbox-row" style="margin-bottom:16px;"><input type="checkbox" id="j-recurring"><label for="j-recurring" style="margin:0;text-transform:none;letter-spacing:0;font-size:13px;">Recurring client</label></div>
+        <div style="display:flex;gap:10px;"><button class="btn btn-gold" onclick="addJob()">Save Job</button><button class="btn btn-outline" onclick="toggleForm('job-form')">Cancel</button></div>
+      </div>
+    </div>
+    <div class="card"><div id="jobs-table-container"></div></div>
+  </div>
+
+  <!-- LEADS -->
+  <div id="tab-leads" class="tab-panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+      <div><div class="section-label">Sales Pipeline</div><div class="section-title" style="margin-bottom:0;">Lead Pipeline</div></div>
+      <button class="btn btn-gold" onclick="toggleForm('lead-form')">+ Add Lead</button>
+    </div>
+    <div id="lead-form" style="display:none;">
+      <div class="form-panel">
+        <div style="font-family:'Barlow Condensed',sans-serif;color:var(--gold);font-size:11px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:16px;">New Lead</div>
+        <div class="form-grid form-grid-3">
+          <div class="form-group"><label>Contact Name</label><input id="l-name" placeholder="Name or business"></div>
+          <div class="form-group"><label>Service Type</label><select id="l-type"><option>Residential</option><option>Commercial</option><option>Vacation Rental</option><option>Government/Federal</option></select></div>
+          <div class="form-group"><label>Estimated Value ($/mo)</label><input type="number" id="l-value" placeholder="0"></div>
+          <div class="form-group"><label>Phone / Email</label><input id="l-contact" placeholder="Contact info"></div>
+          <div class="form-group"><label>Source</label><select id="l-source"><option>Google</option><option>Referral</option><option>Social Media</option><option>Door Hanger</option><option>Cold Outreach</option><option>Other</option></select></div>
+          <div class="form-group"><label>Stage</label><select id="l-stage"><option>New Inquiry</option><option>Quote Sent</option><option>Follow Up</option><option>Booked</option></select></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:4px;"><button class="btn btn-gold" onclick="addLead()">Save Lead</button><button class="btn btn-outline" onclick="toggleForm('lead-form')">Cancel</button></div>
+      </div>
+    </div>
+    <div class="pipeline-cols" id="pipeline-board"></div>
+  </div>
+
+  <!-- CLEANERS -->
+  <div id="tab-cleaners" class="tab-panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+      <div><div class="section-label">Contractor Management</div><div class="section-title" style="margin-bottom:0;">Cleaner Roster</div></div>
+      <button class="btn btn-gold" onclick="toggleForm('cleaner-form')">+ Add Cleaner</button>
+    </div>
+    <div id="cleaner-form" style="display:none;">
+      <div class="form-panel">
+        <div style="font-family:'Barlow Condensed',sans-serif;color:var(--gold);font-size:11px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:16px;">New Cleaner</div>
+        <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr 1fr;">
+          <div class="form-group"><label>Full Name</label><input id="c-name" placeholder="Full name"></div>
+          <div class="form-group"><label>Phone</label><input id="c-phone" placeholder="540-555-0000"></div>
+          <div class="form-group"><label>Email</label><input id="c-email" placeholder="email@example.com"></div>
+          <div class="form-group"><label>Status</label><select id="c-status"><option>Active</option><option>On Hold</option><option>Terminated</option></select></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:4px;"><button class="btn btn-gold" onclick="addCleaner()">Save Cleaner</button><button class="btn btn-outline" onclick="toggleForm('cleaner-form')">Cancel</button></div>
+      </div>
+    </div>
+    <div id="cleaners-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;"></div>
+  </div>
+
+  <!-- CERTIFICATIONS -->
+  <div id="tab-certifications" class="tab-panel">
+    <div class="section-label">Veteran Business Certifications</div>
+    <div class="section-title">Certification Tracker</div>
+    <div class="cert-grid" id="cert-grid"></div>
+  </div>
+
+  <!-- P&L -->
+  <div id="tab-pnl" class="tab-panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+      <div><div class="section-label">Financial Summary</div><div class="section-title" style="margin-bottom:0;">Profit & Loss</div></div>
+      <button class="btn btn-gold" onclick="toggleForm('expense-form')">+ Add Expense</button>
+    </div>
+    <div id="expense-form" style="display:none;">
+      <div class="form-panel">
+        <div style="font-family:'Barlow Condensed',sans-serif;color:var(--gold);font-size:11px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:16px;">Add Expense</div>
+        <div class="form-grid form-grid-3">
+          <div class="form-group"><label>Description</label><input id="e-desc" placeholder="e.g. GoHighLevel"></div>
+          <div class="form-group"><label>Amount ($/mo)</label><input type="number" id="e-amount" placeholder="0"></div>
+          <div class="form-group"><label>Category</label><select id="e-cat"><option>Software</option><option>Contractor Pay</option><option>Marketing</option><option>Insurance</option><option>Other</option></select></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:4px;"><button class="btn btn-gold" onclick="addExpense()">Save</button><button class="btn btn-outline" onclick="toggleForm('expense-form')">Cancel</button></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+      <div class="card"><div class="card-header"><span class="card-title">Revenue</span></div><div id="pnl-revenue"></div></div>
+      <div class="card"><div class="card-header"><span class="card-title">Expenses</span></div><div id="pnl-expenses"></div></div>
+    </div>
+    <div class="card" style="margin-top:20px;"><div class="card-header"><span class="card-title">Net Summary</span></div><div id="pnl-summary"></div></div>
+  </div>
+
+  <!-- AI ASSISTANT -->
+  <div id="tab-ai" class="tab-panel">
+    <div class="section-label">Powered by Claude AI</div>
+    <div class="section-title">Operations Assistant</div>
+    <div class="card">
+      <div id="chat-messages"></div>
+      <div class="quick-prompts" id="quick-prompts"></div>
+      <div class="chat-input-row">
+        <input class="chat-input" id="chat-input" placeholder="Ask anything about Sovereign Services..." onkeydown="if(event.key==='Enter')sendChat()">
+        <button class="btn btn-gold" id="send-btn" onclick="sendChat()">Send</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const STORAGE_KEY = 'sovereign_v3';
+
+function loadState() {
+  try { const s = localStorage.getItem(STORAGE_KEY); if(s) return JSON.parse(s); } catch(e) {}
+  return defaultState();
+}
+
+function defaultState() {
+  return {
+    jobs: [
+      { id:1, client:'Henderson Residence', type:'Residential', cleaner:'Maria S.', status:'Completed', date:'2026-05-28', amount:180, recurring:true },
+      { id:2, client:'Roanoke Office Suites', type:'Commercial', cleaner:'DeShawn T.', status:'Scheduled', date:'2026-06-02', amount:420, recurring:true },
+      { id:3, client:'Blue Ridge Vacation Rental', type:'Vacation Rental', cleaner:'Maria S.', status:'Scheduled', date:'2026-06-03', amount:250, recurring:false },
+      { id:4, client:'Patterson Family', type:'Residential', cleaner:'Unassigned', status:'Pending', date:'2026-06-05', amount:160, recurring:false },
+      { id:5, client:'Vinton Medical Group', type:'Commercial', cleaner:'DeShawn T.', status:'Completed', date:'2026-05-27', amount:380, recurring:true },
+    ],
+    cleaners: [
+      { id:1, name:'Maria S.', phone:'540-555-0101', email:'maria@email.com', status:'Active', jobs:14, rating:4.9 },
+      { id:2, name:'DeShawn T.', phone:'540-555-0182', email:'deshawn@email.com', status:'Active', jobs:11, rating:4.8 },
+      { id:3, name:'Lisa M.', phone:'540-555-0143', email:'lisa@email.com', status:'Active', jobs:7, rating:4.7 },
+      { id:4, name:'Robert K.', phone:'540-555-0167', email:'robert@email.com', status:'On Hold', jobs:3, rating:4.5 },
+    ],
+    leads: [
+      { id:1, name:'Smith Family', type:'Residential', value:160, contact:'540-555-0200', source:'Google', stage:'Quote Sent' },
+      { id:2, name:'Cave Spring Office Park', type:'Commercial', value:800, contact:'540-555-0201', source:'Cold Outreach', stage:'New Inquiry' },
+    ],
+    expenses: [
+      { id:1, desc:'GoHighLevel', amount:97, cat:'Software' },
+      { id:2, desc:'Jobber', amount:49, cat:'Software' },
+      { id:3, desc:'Gusto', amount:79, cat:'Software' },
+      { id:4, desc:'ManyChat', amount:15, cat:'Software' },
+      { id:5, desc:'QuickBooks', amount:30, cat:'Software' },
+      { id:6, desc:'Make.com', amount:20, cat:'Software' },
+      { id:7, desc:'Bland.ai', amount:20, cat:'Software' },
+    ],
+    certSteps: {
+      ein:[false,false,false],
+      v3:[false,false,false,false],
+      sam:[false,false,false,false],
+      sba:[false,false,false],
+      swam:[false,false,false],
+      cve:[false,false,false,false],
+    },
+    chatHistory:[]
+  };
+}
+
+let state = loadState();
+function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {} }
+
+const statusColors = { Completed:'badge-green', Scheduled:'badge-gold', 'In Progress':'badge-blue', Pending:'badge-orange', Cancelled:'badge-red', Active:'badge-green', 'On Hold':'badge-orange', Terminated:'badge-red' };
+function badge(text) { return `<span class="badge ${statusColors[text]||'badge-gray'}">${text}</span>`; }
+function fmt$(n) { return '$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}); }
+
+function switchTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
+  renderAll();
+}
+
+function toggleForm(id) { const el=document.getElementById(id); el.style.display=el.style.display==='none'?'block':'none'; }
+
+function setDateGreeting() {
+  const now=new Date(); const h=now.getHours();
+  const greet=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+  document.getElementById('greeting-text').textContent=`${greet}, Jesse.`;
+  document.getElementById('current-date').textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+}
+
+function renderOverview() {
+  const completed=state.jobs.filter(j=>j.status==='Completed');
+  const revenue=completed.reduce((s,j)=>s+Number(j.amount),0);
+  const projected=state.jobs.filter(j=>['Scheduled','In Progress'].includes(j.status)).reduce((s,j)=>s+Number(j.amount),0);
+  const recurring=state.jobs.filter(j=>j.recurring).length;
+  const active=state.cleaners.filter(c=>c.status==='Active').length;
+  document.getElementById('overview-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Revenue Collected</div><div class="stat-value">${fmt$(revenue)}</div><div class="stat-sub">Completed jobs</div></div>
+    <div class="stat-card"><div class="stat-label">Projected</div><div class="stat-value">${fmt$(projected)}</div><div class="stat-sub">Scheduled jobs</div></div>
+    <div class="stat-card green"><div class="stat-label">Recurring Clients</div><div class="stat-value">${recurring}</div><div class="stat-sub">Active contracts</div></div>
+    <div class="stat-card blue"><div class="stat-label">Active Cleaners</div><div class="stat-value">${active}</div><div class="stat-sub">of ${state.cleaners.length} total</div></div>
+    <div class="stat-card orange"><div class="stat-label">Active Leads</div><div class="stat-value">${state.leads.filter(l=>l.stage!=='Booked').length}</div><div class="stat-sub">In pipeline</div></div>`;
+  const rows=state.jobs.slice(-4).reverse().map(j=>`<tr><td style="font-weight:500;">${j.client}</td><td style="color:var(--text-dim);font-size:12px;">${j.type}</td><td style="color:var(--gold);">${fmt$(j.amount)}</td><td>${badge(j.status)}</td></tr>`).join('');
+  document.getElementById('overview-jobs-table').innerHTML=`<table><thead><tr><th>Client</th><th>Type</th><th>Amount</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`;
+  const certs=getCertData();
+  document.getElementById('overview-certs').innerHTML=certs.map(c=>{const done=c.steps.filter(Boolean).length;const pct=Math.round((done/c.steps.length)*100);return`<div style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:12px;font-weight:600;">${c.name}</span><span style="font-size:11px;color:var(--text-dim);">${done}/${c.steps.length}</span></div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div></div>`;}).join('');
+  document.getElementById('overview-cleaners').innerHTML=state.cleaners.map(c=>`<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:14px 18px;flex:1;min-width:180px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><span style="font-weight:600;font-size:14px;">${c.name}</span>${badge(c.status)}</div><div style="color:var(--text-dim);font-size:12px;">${c.jobs} jobs · ⭐ ${c.rating}</div></div>`).join('');
+}
+
+function renderJobs() {
+  if(!state.jobs.length){document.getElementById('jobs-table-container').innerHTML='<div class="empty-state">No jobs yet.</div>';return;}
+  const rows=[...state.jobs].reverse().map(j=>`<tr><td style="font-weight:500;">${j.client} ${j.recurring?'<span style="color:var(--gold-dim);font-size:10px;">↻</span>':''}</td><td style="color:var(--text-dim);font-size:12px;">${j.type}</td><td>${j.cleaner}</td><td style="color:var(--text-dim);font-size:12px;">${j.date}</td><td style="color:var(--gold);font-weight:600;">${fmt$(j.amount)}</td><td>${badge(j.status)}</td><td><button class="btn btn-danger btn-sm" onclick="deleteJob(${j.id})">×</button></td></tr>`).join('');
+  document.getElementById('jobs-table-container').innerHTML=`<table><thead><tr><th>Client</th><th>Type</th><th>Cleaner</th><th>Date</th><th>Amount</th><th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function addJob() {
+  const client=document.getElementById('j-client').value.trim();
+  const amount=parseFloat(document.getElementById('j-amount').value);
+  const date=document.getElementById('j-date').value;
+  if(!client||!amount||!date){alert('Please fill in Client, Amount, and Date.');return;}
+  state.jobs.push({id:Date.now(),client,type:document.getElementById('j-type').value,cleaner:document.getElementById('j-cleaner').value||'Unassigned',date,amount,status:document.getElementById('j-status').value,recurring:document.getElementById('j-recurring').checked});
+  save();renderJobs();renderOverview();
+  ['j-client','j-cleaner','j-amount','j-date'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('j-recurring').checked=false;
+  toggleForm('job-form');
+}
+
+function deleteJob(id){if(!confirm('Remove this job?'))return;state.jobs=state.jobs.filter(j=>j.id!==id);save();renderJobs();renderOverview();}
+
+const STAGES=['New Inquiry','Quote Sent','Follow Up','Booked'];
+function renderLeads() {
+  document.getElementById('pipeline-board').innerHTML=STAGES.map(stage=>{
+    const leads=state.leads.filter(l=>l.stage===stage);
+    const cards=leads.map(l=>`<div class="pipeline-card"><div class="pipeline-card-name">${l.name}</div><div style="color:var(--text-dim);font-size:11px;">${l.type} · ${l.source}</div><div class="pipeline-card-value">${fmt$(l.value)}/mo</div></div>`).join('')||'<div style="color:var(--text-faint);font-size:12px;">Empty</div>';
+    return`<div class="pipeline-col"><div class="pipeline-col-title">${stage} (${leads.length})</div>${cards}</div>`;
+  }).join('');
+}
+
+function addLead(){
+  const name=document.getElementById('l-name').value.trim();
+  if(!name){alert('Please enter a contact name.');return;}
+  state.leads.push({id:Date.now(),name,type:document.getElementById('l-type').value,value:parseFloat(document.getElementById('l-value').value)||0,contact:document.getElementById('l-contact').value,source:document.getElementById('l-source').value,stage:document.getElementById('l-stage').value});
+  save();renderLeads();
+  ['l-name','l-contact','l-value'].forEach(id=>document.getElementById(id).value='');
+  toggleForm('lead-form');
+}
+
+function renderCleaners(){
+  const colors={Active:'var(--green)','On Hold':'var(--orange)',Terminated:'var(--red)'};
+  document.getElementById('cleaners-grid').innerHTML=state.cleaners.map(c=>`
+    <div style="background:var(--surface);border:1px solid var(--border2);border-top:2px solid ${colors[c.status]||'var(--gold)'};border-radius:8px;padding:22px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;"><div><div style="font-weight:700;font-size:16px;margin-bottom:6px;">${c.name}</div>${badge(c.status)}</div><div style="color:var(--gold);font-family:'Playfair Display',serif;font-size:22px;font-weight:700;">⭐ ${c.rating}</div></div>
+      <div style="color:var(--text-dim);font-size:13px;margin-bottom:6px;">📞 ${c.phone}</div>
+      <div style="color:var(--text-dim);font-size:13px;margin-bottom:10px;">✉️ ${c.email}</div>
+      <div style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">${c.jobs} jobs completed</div>
+      <button class="btn btn-danger btn-sm" onclick="deleteCleaner(${c.id})">Remove</button>
+    </div>`).join('');
+}
+
+function addCleaner(){
+  const name=document.getElementById('c-name').value.trim();
+  if(!name){alert('Please enter a name.');return;}
+  state.cleaners.push({id:Date.now(),name,phone:document.getElementById('c-phone').value||'N/A',email:document.getElementById('c-email').value||'N/A',status:document.getElementById('c-status').value,jobs:0,rating:5.0});
+  save();renderCleaners();renderOverview();
+  ['c-name','c-phone','c-email'].forEach(id=>document.getElementById(id).value='');
+  toggleForm('cleaner-form');
+}
+
+function deleteCleaner(id){if(!confirm('Remove this cleaner?'))return;state.cleaners=state.cleaners.filter(c=>c.id!==id);save();renderCleaners();renderOverview();}
+
+function getCertData(){
+  const s=state.certSteps;
+  return[
+    {key:'ein',name:'EIN (IRS)',steps:s.ein,stepLabels:['Wait for IRS call','Receive EIN letter','Add to business records']},
+    {key:'v3',name:'Virginia V3',steps:s.v3,stepLabels:['Obtain EIN','Complete V3 application','Submit veteran pledge','Receive certification']},
+    {key:'sam',name:'SAM.gov',steps:s.sam,stepLabels:['Obtain EIN','Register at SAM.gov','Complete validation','Active registration']},
+    {key:'sba',name:'SBA VetCert',steps:s.sba,stepLabels:['SAM.gov active','Apply at vetcert.va.gov','Receive approval']},
+    {key:'swam',name:'Virginia SWaM',steps:s.swam,stepLabels:['Obtain EIN','Apply at dmbe.virginia.gov','Receive certification']},
+    {key:'cve',name:'VA CVE VOSB',steps:s.cve,stepLabels:['SAM.gov active','Gather documents','Apply at vetbiz.va.gov','Receive verification']},
+  ];
+}
+
+function renderCerts(){
+  document.getElementById('cert-grid').innerHTML=getCertData().map(c=>{
+    const done=c.steps.filter(Boolean).length;
+    const pct=Math.round((done/c.steps.length)*100);
+    const steps=c.stepLabels.map((label,i)=>`<div class="cert-step"><div class="step-check ${c.steps[i]?'done':''}" onclick="toggleCertStep('${c.key}',${i})">${c.steps[i]?'✓':''}</div><span style="color:${c.steps[i]?'var(--text-dim)':'var(--text)'};text-decoration:${c.steps[i]?'line-through':'none'}">${label}</span></div>`).join('');
+    return`<div class="cert-card ${c.steps.every(Boolean)?'done':c.steps.some(Boolean)?'in-progress':''}"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><span style="font-weight:600;font-size:14px;">${c.name}</span><span style="font-size:11px;color:var(--text-dim);">${done}/${c.steps.length}</span></div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div><div style="margin-top:12px;">${steps}</div></div>`;
+  }).join('');
+}
+
+function toggleCertStep(key,idx){state.certSteps[key][idx]=!state.certSteps[key][idx];save();renderCerts();renderOverview();}
+
+function renderPnL(){
+  const completedRev=state.jobs.filter(j=>j.status==='Completed').reduce((s,j)=>s+Number(j.amount),0);
+  const projectedRev=state.jobs.filter(j=>['Scheduled','In Progress'].includes(j.status)).reduce((s,j)=>s+Number(j.amount),0);
+  const totalExp=state.expenses.reduce((s,e)=>s+Number(e.amount),0);
+  const net=completedRev-totalExp;
+  document.getElementById('pnl-revenue').innerHTML=`<div class="pnl-row"><span>Revenue Collected</span><span style="color:var(--green);font-weight:600;">${fmt$(completedRev)}</span></div><div class="pnl-row"><span style="color:var(--text-dim);">Projected</span><span style="color:var(--gold-dim);">${fmt$(projectedRev)}</span></div>`;
+  document.getElementById('pnl-expenses').innerHTML=state.expenses.map(e=>`<div class="pnl-row"><span>${e.desc}</span><div style="display:flex;align-items:center;gap:10px;"><span style="color:var(--red);font-weight:600;">-${fmt$(e.amount)}/mo</span><button class="btn btn-danger btn-sm" onclick="deleteExpense(${e.id})">×</button></div></div>`).join('');
+  document.getElementById('pnl-summary').innerHTML=`<div class="pnl-row"><span>Total Revenue</span><span style="color:var(--green);font-weight:600;">${fmt$(completedRev)}</span></div><div class="pnl-row"><span>Total Expenses</span><span style="color:var(--red);font-weight:600;">-${fmt$(totalExp)}/mo</span></div><div class="pnl-row total"><span>Net Profit</span><span style="color:${net>=0?'var(--gold)':'var(--red)'};font-weight:700;font-size:16px;">${fmt$(net)}</span></div>`;
+}
+
+function addExpense(){
+  const desc=document.getElementById('e-desc').value.trim();
+  const amount=parseFloat(document.getElementById('e-amount').value);
+  if(!desc||!amount){alert('Please fill in description and amount.');return;}
+  state.expenses.push({id:Date.now(),desc,amount,cat:document.getElementById('e-cat').value});
+  save();renderPnL();
+  ['e-desc','e-amount'].forEach(id=>document.getElementById(id).value='');
+  toggleForm('expense-form');
+}
+
+function deleteExpense(id){if(!confirm('Remove?'))return;state.expenses=state.expenses.filter(e=>e.id!==id);save();renderPnL();}
+
+// ─── AI CHAT ─────────────────────────────────────────────────────────────────
+const SYSTEM_PROMPT=`You are the AI operations assistant for Sovereign Services LLC, a veteran-owned remote cleaning company in Vinton, Virginia. Owner: Jesse Holley, U.S. Army veteran. Business model: Fully automated remote cleaning. Jesse manages only hiring/firing cleaners, weekly review, serious complaints, annual taxes, major decisions. Services: Residential, commercial, vacation rental, government contracts. Target market: Roanoke/Vinton/Cave Spring VA. Tech stack: GoHighLevel, Bland.ai, Jobber, Gusto, ManyChat, QuickBooks, Make.com. Pursuing: EIN, Virginia V3, SAM.gov, SBA VetCert, Virginia SWaM, VA CVE VOSB. Be direct, practical, no jargon. Jesse is a veteran who values straight talk.`;
+
+const QUICK_PROMPTS=['How do I get my first 5 clients?','What should I charge for commercial?','How do I get V3 certified?','How do I find reliable cleaners?','What\'s my next priority right now?','How do I scale to $10k/month?'];
+
+function renderChat(){
+  const container=document.getElementById('chat-messages');
+  if(!state.chatHistory.length){
+    container.innerHTML=`<div class="msg msg-ai"><div class="msg-label">Sovereign AI</div><div class="msg-bubble">Command center online. I know your business — Sovereign Services, Vinton VA, veteran-owned remote cleaning. Ask me anything about operations, growth, pricing, certifications, or strategy.</div></div>`;
+  } else {
+    container.innerHTML=state.chatHistory.map(m=>`<div class="msg ${m.role==='assistant'?'msg-ai':'msg-user'}"><div class="msg-label">${m.role==='assistant'?'Sovereign AI':'Jesse'}</div><div class="msg-bubble">${m.content.replace(/\n/g,'<br>')}</div></div>`).join('');
+  }
+  container.scrollTop=container.scrollHeight;
+  document.getElementById('quick-prompts').innerHTML=QUICK_PROMPTS.map(q=>`<button class="quick-prompt" onclick="document.getElementById('chat-input').value='${q}'">${q}</button>`).join('');
+}
+
+async function sendChat(){
+  const input=document.getElementById('chat-input');
+  const text=input.value.trim();
+  if(!text)return;
+  input.value='';
+  state.chatHistory.push({role:'user',content:text});
+  save();
+  const container=document.getElementById('chat-messages');
+  container.innerHTML+=`<div class="msg msg-user"><div class="msg-label">Jesse</div><div class="msg-bubble">${text.replace(/\n/g,'<br>')}</div></div><div class="msg msg-ai" id="typing-indicator"><div class="msg-label">Sovereign AI</div><div class="msg-bubble"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div></div>`;
+  container.scrollTop=container.scrollHeight;
+  document.getElementById('send-btn').disabled=true;
+  const completed=state.jobs.filter(j=>j.status==='Completed');
+  const revenue=completed.reduce((s,j)=>s+Number(j.amount),0);
+  const liveContext=`\n\nLIVE DATA: Completed jobs: ${completed.length}, Revenue: $${revenue}, Active cleaners: ${state.cleaners.filter(c=>c.status==='Active').length}, Leads: ${state.leads.length}, Monthly expenses: $${state.expenses.reduce((s,e)=>s+Number(e.amount),0)}`;
+  try {
+    const res=await fetch('/.netlify/functions/claude',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:SYSTEM_PROMPT+liveContext,messages:state.chatHistory})
+    });
+    const data=await res.json();
+    const reply=data.content?.map(b=>b.text||'').join('')||'No response.';
+    state.chatHistory.push({role:'assistant',content:reply});
+    save();
+    document.getElementById('typing-indicator').outerHTML=`<div class="msg msg-ai"><div class="msg-label">Sovereign AI</div><div class="msg-bubble">${reply.replace(/\n/g,'<br>')}</div></div>`;
+  } catch(e) {
+    document.getElementById('typing-indicator').outerHTML=`<div class="msg msg-ai"><div class="msg-label">Sovereign AI</div><div class="msg-bubble" style="color:var(--red);">Connection error. Please try again.</div></div>`;
+  }
+  document.getElementById('send-btn').disabled=false;
+  container.scrollTop=container.scrollHeight;
+}
+
+function renderAll(){renderOverview();renderJobs();renderLeads();renderCleaners();renderCerts();renderPnL();renderChat();}
+setDateGreeting();
+renderAll();
+</script>
+</body>
+</html>
