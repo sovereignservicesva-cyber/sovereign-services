@@ -542,7 +542,7 @@ async function sendChat(){
     const res=await fetch('https://sovereign-command-center-v2.netlify.app/.netlify/functions/claude',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:SYSTEM_PROMPT+liveContext,messages:state.chatHistory})
+     body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:SYSTEM_PROMPT+liveContext,messages:state.chatHistory.length?state.chatHistory:[{role:'user',content:'hello'}]})
     });
     const data=await res.json();
     const reply=data.content?.map(b=>b.text||'').join('')||'No response.';
